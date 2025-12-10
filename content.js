@@ -14,7 +14,7 @@
     size: 8, // Max Radius
     duration: 375, // ms
     opacity: 0.25, // Base Opacity
-    color: "#a8a8a8", // Hex Color
+    color: "rgb(168 168 168)", // Hex Color
   };
 
   // derived color for rgba manipulation

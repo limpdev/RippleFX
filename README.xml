@@ -1,0 +1,698 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files and files not matching ignore patterns, combined into a single document by Repomix.
+The content has been processed where empty lines have been removed.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: **/*.go, **/*.js, **/*.ts, **/*.css, **/*.html, **/*.yaml, **/*.toml, **/*.xml, **/*.bat, **/*.sh, **/*.py, **/*.md
+- Files matching these patterns are excluded: node_modules, **/node_modules, **/.venv/**, **/venv/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Empty lines have been removed from all files
+- Long base64 data strings (e.g., data:image/png;base64,...) have been truncated to reduce token count
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+icons/
+content.js
+icons/icon1024.png
+icons/icon128.png
+icons/icon16.png
+icons/icon48.png
+InjectableVersion.md
+LICENSE
+manifest.json
+popup.html
+popup.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="content.js">
+(() => {
+  "use strict";
+  // State Management
+  let canvas,
+    ctx,
+    ripples = [];
+  let animationId = null;
+  let lastFrameTime = 0;
+  // Default Settings
+  let config = {
+    enabled: true,
+    size: 8, // Max Radius
+    duration: 375, // ms
+    opacity: 0.25, // Base Opacity
+    color: "#a8a8a8", // Hex Color
+  };
+  // derived color for rgba manipulation
+  let rgbColor = { r: 168, g: 168, b: 168 };
+  const MAX_RIPPLES = 32;
+  const TARGET_FPS = 120;
+  const FRAME_TIME = 1000 / TARGET_FPS;
+  // --- Helper: Hex to RGB ---
+  function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 168, g: 168, b: 168 };
+  }
+  // --- Initialization Logic ---
+  function init() {
+    // Load settings from storage
+    chrome.storage.sync.get(config, (items) => {
+      updateConfig(items);
+      if (config.enabled) {
+        setupCanvas();
+        addListeners();
+      }
+    });
+    // Listen for changes from the Popup
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === "sync") {
+        const newSettings = {};
+        for (let key in changes) {
+          newSettings[key] = changes[key].newValue;
+        }
+        updateConfig(newSettings);
+      }
+    });
+  }
+  function updateConfig(newConfig) {
+    // Merge new settings
+    config = { ...config, ...newConfig };
+    rgbColor = hexToRgb(config.color);
+    // Handle Enable/Disable toggle
+    if (config.enabled && !canvas) {
+      setupCanvas();
+      addListeners();
+    } else if (!config.enabled && canvas) {
+      cleanup();
+    }
+    // Update opacity live if canvas exists
+    if (canvas) {
+      canvas.style.opacity = config.opacity;
+    }
+  }
+  // --- Canvas Logic ---
+  function setupCanvas() {
+    if (canvas) return; // Already exists
+    try {
+      canvas = document.createElement("canvas");
+      canvas.id = "ripple-fx-canvas";
+      canvas.style.cssText = `
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          opacity: ${config.opacity} !important;
+          visibility: visible !important;
+          display: block !important;
+          transform: none !important;
+        `;
+      ctx = canvas.getContext("2d", {
+        alpha: true,
+        desynchronized: true,
+      });
+      if (!ctx) return;
+      const targetParent = document.body || document.documentElement;
+      if (targetParent.firstChild) {
+        targetParent.insertBefore(canvas, targetParent.firstChild);
+      } else {
+        targetParent.appendChild(canvas);
+      }
+      resizeCanvas();
+    } catch (e) {
+      console.warn("RippleFX: Init failed", e);
+    }
+  }
+  function resizeCanvas() {
+    if (!canvas || !ctx) return;
+    const vw = Math.max(
+      document.documentElement.clientWidth || 0,
+      window.innerWidth || 0
+    );
+    const vh = Math.max(
+      document.documentElement.clientHeight || 0,
+      window.innerHeight || 0
+    );
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = vw * dpr;
+    canvas.height = vh * dpr;
+    ctx.scale(dpr, dpr);
+    canvas.style.width = vw + "px";
+    canvas.style.height = vh + "px";
+  }
+  // --- Animation Loop ---
+  function addRipple(x, y) {
+    if (!config.enabled || !ctx) return;
+    if (ripples.length >= MAX_RIPPLES) ripples.shift();
+    ripples.push({
+      x: x,
+      y: y,
+      startTime: performance.now(),
+      maxRadius: Number(config.size), // Ensure it's a number
+    });
+    if (animationId === null) {
+      lastFrameTime = performance.now();
+      animationId = requestAnimationFrame(drawRipples);
+    }
+  }
+  function drawRipples(timestamp) {
+    if (!ctx || !canvas) return;
+    const elapsed = timestamp - lastFrameTime;
+    if (elapsed < FRAME_TIME - 1) {
+      animationId = requestAnimationFrame(drawRipples);
+      return;
+    }
+    lastFrameTime = timestamp - (elapsed % FRAME_TIME);
+    const now = performance.now();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const ripple = ripples[i];
+      const elapsedTime = now - ripple.startTime;
+      const progress = Math.min(elapsedTime / Number(config.duration), 1);
+      if (progress >= 1) {
+        ripples.splice(i, 1);
+        continue;
+      }
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const currentRadius = ripple.maxRadius * eased * 2;
+      const currentOpacity = 1 - progress;
+      ctx.beginPath();
+      ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
+      // Use dynamic color settings
+      ctx.fillStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${currentOpacity})`;
+      ctx.fill();
+    }
+    if (ripples.length > 0) {
+      animationId = requestAnimationFrame(drawRipples);
+    } else {
+      animationId = null;
+    }
+  }
+  // --- Event Handling ---
+  function handleClick(event) {
+    if (!event.isTrusted) return;
+    addRipple(event.clientX, event.clientY);
+  }
+  function addListeners() {
+    document.addEventListener("click", handleClick, {
+      passive: true,
+      capture: true,
+    });
+    window.addEventListener("resize", resizeCanvas, { passive: true });
+  }
+  function cleanup() {
+    if (animationId !== null) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    if (canvas) {
+      canvas.remove();
+      canvas = null;
+      ctx = null;
+    }
+    ripples = [];
+    document.removeEventListener("click", handleClick, { capture: true });
+    window.removeEventListener("resize", resizeCanvas);
+  }
+  // --- Bootstrap ---
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
+</file>
+
+<file path="InjectableVersion.md">
+# Just Some JavaScript
+
+> _Injectable version of the extension's ripple logic_
+
+```js
+// Universal Canvas Ripple Effect - 120Hz Optimized
+(() => {
+  'use strict';
+
+  // Prevent multiple initializations
+  if (window.canvasRippleInitialized) return;
+  window.canvasRippleInitialized = true;
+
+  let canvas,
+    ctx,
+    ripples = [];
+
+  const MAX_RIPPLES = 32;
+  const RIPPLE_DURATION = 375;
+  const MAX_RADIUS = 12;
+  const TARGET_FPS = 120;
+  const FRAME_TIME = 1000 / TARGET_FPS; // ~8.33ms per frame
+
+  let lastFrameTime = 0;
+  let animationId = null;
+  let ripOpacity = 0.35;
+
+  function createCanvasOverlay() {
+    try {
+      // Create canvas element
+      canvas = document.createElement('canvas');
+      canvas.id = 'universal-ripple-canvas';
+      canvas.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        pointer-events: none !important;
+        z-index: 2147483647 !important;
+        opacity: ${ripOpacity} !important;
+        visibility: visible !important;
+        display: block !important;
+        transform: none !important;
+      `;
+
+      // Test canvas support
+      ctx = canvas.getContext('2d', {
+        alpha: true,
+        desynchronized: true, // Hint for better performance
+      });
+
+      if (!ctx) {
+        console.warn('[Ripple] Canvas 2D not supported');
+        return false;
+      }
+
+      // Insert as first child of body (or documentElement as fallback)
+      const targetParent = document.body || document.documentElement;
+      if (targetParent.firstChild) {
+        targetParent.insertBefore(canvas, targetParent.firstChild);
+      } else {
+        targetParent.appendChild(canvas);
+      }
+
+      return true;
+    } catch (error) {
+      console.warn('[Ripple] Canvas creation failed:', error);
+      return false;
+    }
+  }
+
+  function resizeCanvas() {
+    if (!canvas || !ctx) return;
+    try {
+      // Get viewport dimensions
+      const vw = Math.max(
+        document.documentElement.clientWidth || 0,
+        window.innerWidth || 0
+      );
+      const vh = Math.max(
+        document.documentElement.clientHeight || 0,
+        window.innerHeight || 0
+      );
+
+      // Set canvas size (cap DPR for performance)
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = vw * dpr;
+      canvas.height = vh * dpr;
+
+      // Scale context for high DPI
+      ctx.scale(dpr, dpr);
+
+      // Ensure canvas styling matches viewport
+      canvas.style.width = vw + 'px';
+      canvas.style.height = vh + 'px';
+    } catch (error) {
+      console.warn('[Ripple] Canvas resize failed:', error);
+    }
+  }
+
+  function addRipple(x, y) {
+    if (!ctx) return;
+
+    // Remove oldest ripple if at capacity
+    if (ripples.length >= MAX_RIPPLES) {
+      ripples.shift();
+    }
+
+    ripples.push({
+      x: x,
+      y: y,
+      startTime: performance.now(),
+      maxRadius: MAX_RADIUS,
+    });
+
+    // Start animation loop if not running
+    if (animationId === null) {
+      lastFrameTime = performance.now();
+      animationId = requestAnimationFrame(drawRipples);
+    }
+  }
+
+  function drawRipples(timestamp) {
+    if (!ctx || !canvas) return;
+
+    // Frame rate limiting for 120Hz
+    const elapsed = timestamp - lastFrameTime;
+
+    // Skip frame if we're running too fast (allow slight tolerance)
+    if (elapsed < FRAME_TIME - 1) {
+      animationId = requestAnimationFrame(drawRipples);
+      return;
+    }
+
+    lastFrameTime = timestamp - (elapsed % FRAME_TIME);
+    const now = performance.now();
+
+    try {
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw active ripples
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const ripple = ripples[i];
+        const elapsedTime = now - ripple.startTime;
+        const progress = Math.min(elapsedTime / RIPPLE_DURATION, 1);
+
+        // Remove completed ripples
+        if (progress >= 1) {
+          ripples.splice(i, 1);
+          continue;
+        }
+
+        // Easing: ease-out cubic
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const currentRadius = ripple.maxRadius * eased * 2;
+        const opacity = (1 - progress) * 0.4;
+
+        // Draw ripple circle
+        ctx.beginPath();
+        ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(168, 168, 168, ${opacity})`;
+        ctx.fill();
+      }
+    } catch (error) {
+      console.warn('[Ripple] Draw error:', error);
+    }
+
+    // Continue animation loop if ripples exist, otherwise stop
+    if (ripples.length > 0) {
+      animationId = requestAnimationFrame(drawRipples);
+    } else {
+      animationId = null;
+      console.log('[Ripple] Animation loop paused (no active ripples)');
+    }
+  }
+
+  function handleClick(event) {
+    if (!event.isTrusted) return; // Ignore programmatic clicks
+
+    // Get click coordinates
+    const x = event.clientX;
+    const y = event.clientY;
+
+    addRipple(x, y);
+  }
+
+  function initialize() {
+    // Wait for body to exist
+    if (!document.body && document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initialize, { once: true });
+      return;
+    }
+
+    // Create canvas overlay
+    if (!createCanvasOverlay()) {
+      console.warn('[Ripple] Initialization failed');
+      return;
+    }
+
+    // Set initial size
+    resizeCanvas();
+
+    // Set up event listeners
+    document.addEventListener('click', handleClick, {
+      passive: true,
+      capture: true, // Capture phase to catch all clicks
+    });
+
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+
+    // Handle viewport changes (mobile orientation, etc.)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', resizeCanvas, {
+        passive: true,
+      });
+    }
+
+    console.log('[Ripple] 120Hz canvas ripple effect initialized');
+  }
+
+  // Handle different document states
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize, { once: true });
+  } else {
+    // DOM already ready, initialize immediately
+    setTimeout(initialize, 0);
+  }
+
+  // Cleanup function (optional - for debugging)
+  window.cleanupRippleEffect = function () {
+    if (animationId !== null) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    if (canvas && canvas.parentNode) {
+      canvas.parentNode.removeChild(canvas);
+    }
+    window.canvasRippleInitialized = false;
+    ripples.length = 0;
+  };
+})();
+
+```
+</file>
+
+<file path="popup.html">
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            width: 220px;
+            padding: 15px;
+            font-family: system-ui, sans-serif;
+            background: #222;
+            color: #eee;
+        }
+        h2 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: ew-resize;
+        }
+        input[type="color"] {
+            width: 100%;
+            height: 30px;
+            border: none;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+            border-radius: 9px;
+        }
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .status-text {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        /* Custom Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body>
+    <h2>RippleFX Settings</h2>
+    <div class="toggle-row">
+        <span class="status-text">Enable Effect</span>
+        <label class="switch">
+            <input type="checkbox" id="enabled">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="control-group">
+        <label>Size (Radius) <span id="sizeVal">12</span></label>
+        <input type="range" id="size" min="5" max="50" value="8">
+    </div>
+    <div class="control-group">
+        <label>Duration (ms) <span id="durVal">375</span></label>
+        <input type="range" id="duration" min="100" max="1000" step="25" value="375">
+    </div>
+    <div class="control-group">
+        <label>Opacity <span id="opVal">0.35</span></label>
+        <input type="range" id="opacity" min="0.1" max="1.0" step="0.05" value="0.25">
+    </div>
+    <div class="control-group">
+        <label>Ripple Color</label>
+        <input type="color" id="color" value="#a8a8a8">
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
+</file>
+
+<file path="popup.js">
+document.addEventListener("DOMContentLoaded", () => {
+  // Elements
+  const els = {
+    enabled: document.getElementById("enabled"),
+    size: document.getElementById("size"),
+    duration: document.getElementById("duration"),
+    opacity: document.getElementById("opacity"),
+    color: document.getElementById("color"),
+    // Value labels
+    sizeVal: document.getElementById("sizeVal"),
+    durVal: document.getElementById("durVal"),
+    opVal: document.getElementById("opVal"),
+  };
+  // Defaults (must match content.js)
+  const defaults = {
+    enabled: true,
+    size: 8,
+    duration: 375,
+    opacity: 0.25,
+    color: "#a8a8a8",
+  };
+  // Load saved settings
+  chrome.storage.sync.get(defaults, (items) => {
+    els.enabled.checked = items.enabled;
+    els.size.value = items.size;
+    els.duration.value = items.duration;
+    els.opacity.value = items.opacity;
+    els.color.value = items.color;
+    updateLabels();
+  });
+  // Event Listeners for all inputs
+  Object.keys(els).forEach((key) => {
+    if (key.includes("Val")) return; // skip labels
+    els[key].addEventListener("input", () => {
+      updateLabels();
+      saveSettings();
+    });
+  });
+  function updateLabels() {
+    els.sizeVal.textContent = els.size.value;
+    els.durVal.textContent = els.duration.value;
+    els.opVal.textContent = els.opacity.value;
+  }
+  function saveSettings() {
+    const settings = {
+      enabled: els.enabled.checked,
+      size: parseInt(els.size.value),
+      duration: parseInt(els.duration.value),
+      opacity: parseFloat(els.opacity.value),
+      color: els.color.value,
+    };
+    chrome.storage.sync.set(settings);
+  }
+});
+</file>
+
+</files>
