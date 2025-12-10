@@ -1,4 +1,4 @@
-# os residuals
+# OS residuals
 desktop.ini
 Desktop.ini
 Icon?
@@ -9,20 +9,87 @@ pids
 *.seed
 *.pid.lock
 
-# figs & logs
+# Logs & environment
 logs
 *.log
 .env
+.env.local
+.env.*.local
 
-# js
+# JavaScript/Node
 node_modules/
 .next
 .yarn-integrity
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
+.pnp
+.pnp.js
+coverage/
+.nyc_output
 
-# editors
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+*.mo
+*.pot
+.venv
+venv/
+ENV/
+env/
+.Python
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+Godeps/
+
+# Editors
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -35,8 +102,19 @@ yarn-error.log*
 *.launch
 .settings/
 *.sublime-workspace
+*.swp
+*.swo
+*~
 
-# compilings
+# Compiled outputs
 /dist
 /tmp
 /out-tsc
+*.o
+*.a
+
+# Misc
+.sass-cache/
+connect.lock
+typings/
+.angular/
