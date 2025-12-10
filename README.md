@@ -1,3 +1,6 @@
 # RippleFX
 
-_ya, make ripples and shit when you_ **c l i c k  i t**...
+Some optimized JavaScript for your soul... it makes ripples
+
+
+**splishy splashy**
