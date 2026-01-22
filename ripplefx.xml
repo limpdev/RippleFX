@@ -1,0 +1,476 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: **/*.json, **/*.css, **/*.js
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+build.js
+content.js
+manifest.json
+package.json
+popup.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="build.js">
+#!/usr/bin/env node
+
+// Build script for RippleFX Chrome Extension
+// Minifies and bundles all extension files
+
+const esbuild = require('esbuild');
+const fs = require('fs');
+const path = require('path');
+
+const distDir = 'dist';
+const iconsDir = path.join(distDir, 'icons');
+
+// Clean and create dist directory
+if (fs.existsSync(distDir)) {
+  fs.rmSync(distDir, { recursive: true });
+}
+fs.mkdirSync(distDir);
+fs.mkdirSync(iconsDir);
+
+// Build content script
+esbuild.buildSync({
+  entryPoints: ['content.js'],
+  bundle: true,
+  minify: true,
+  outfile: path.join(distDir, 'content.js'),
+  target: 'chrome90',
+  format: 'iife',
+});
+
+// Build popup script
+esbuild.buildSync({
+  entryPoints: ['popup.js'],
+  minify: true,
+  outfile: path.join(distDir, 'popup.js'),
+  target: 'chrome90',
+});
+
+// Minify popup HTML
+const popupHtml = fs.readFileSync('popup.html', 'utf8');
+const minifiedHtml = popupHtml
+  .replace(/\n\s+/g, '') // Remove newlines and indentation
+  .replace(/>\s+</g, '><') // Remove whitespace between tags
+  .replace(/\s{2,}/g, ' '); // Collapse multiple spaces
+
+fs.writeFileSync(path.join(distDir, 'popup.html'), minifiedHtml);
+
+// Copy manifest and icons
+fs.copyFileSync('manifest.json', path.join(distDir, 'manifest.json'));
+fs.copyFileSync('LICENSE', path.join(distDir, 'LICENSE'));
+
+// Copy icon files
+const icons = ['icon16.png', 'icon48.png', 'icon128.png', 'icon1024.png'];
+icons.forEach(icon => {
+  const src = path.join('icons', icon);
+  const dest = path.join(iconsDir, icon);
+  if (fs.existsSync(src)) {
+    fs.copyFileSync(src, dest);
+  }
+});
+
+console.log('✓ Build complete!');
+console.log(`✓ Content script: ${getFileSize('content.js')} → ${getFileSize(path.join(distDir, 'content.js'))}`);
+console.log(`✓ Popup script: ${getFileSize('popup.js')} → ${getFileSize(path.join(distDir, 'popup.js'))}`);
+console.log(`✓ Popup HTML: ${getFileSize('popup.html')} → ${getFileSize(path.join(distDir, 'popup.html'))}`);
+
+function getFileSize(filepath) {
+  const stats = fs.statSync(filepath);
+  const kb = (stats.size / 1024).toFixed(2);
+  return `${kb} KB`;
+}
+</file>
+
+<file path="package.json">
+{
+  "dependencies": {
+    "esbuild": "^0.27.1",
+    "html-minifier-terser": "^7.2.0"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "watch": "node build.js && echo 'Watching...' || exit 0"
+  }
+}
+</file>
+
+<file path="popup.js">
+document.addEventListener("DOMContentLoaded", () => {
+  // Elements
+  const els = {
+    enabled: document.getElementById("enabled"),
+    size: document.getElementById("size"),
+    duration: document.getElementById("duration"),
+    opacity: document.getElementById("opacity"),
+    color: document.getElementById("color"),
+    // Value labels
+    sizeVal: document.getElementById("sizeVal"),
+    durVal: document.getElementById("durVal"),
+    opVal: document.getElementById("opVal"),
+  };
+
+  // Defaults (must match content.js)
+  const defaults = {
+    enabled: true,
+    size: 8,
+    duration: 375,
+    opacity: 0.25,
+    color: "#a8a8a8",
+  };
+
+  // Load saved settings
+  chrome.storage.sync.get(defaults, (items) => {
+    els.enabled.checked = items.enabled;
+    els.size.value = items.size;
+    els.duration.value = items.duration;
+    els.opacity.value = items.opacity;
+    els.color.value = items.color;
+
+    updateLabels();
+  });
+
+  // Event Listeners for all inputs
+  Object.keys(els).forEach((key) => {
+    if (key.includes("Val")) return; // skip labels
+
+    els[key].addEventListener("input", () => {
+      updateLabels();
+      saveSettings();
+    });
+  });
+
+  function updateLabels() {
+    els.sizeVal.textContent = els.size.value;
+    els.durVal.textContent = els.duration.value;
+    els.opVal.textContent = els.opacity.value;
+  }
+
+  function saveSettings() {
+    const settings = {
+      enabled: els.enabled.checked,
+      size: parseInt(els.size.value),
+      duration: parseInt(els.duration.value),
+      opacity: parseFloat(els.opacity.value),
+      color: els.color.value,
+    };
+
+    chrome.storage.sync.set(settings);
+  }
+});
+</file>
+
+<file path="content.js">
+(() => {
+  "use strict";
+
+  // State Management
+  let canvas,
+    ctx,
+    ripples = [];
+  let animationId = null;
+  let lastFrameTime = 0;
+
+  // Default Settings
+  let config = {
+    enabled: true,
+    size: 8, // Max Radius
+    duration: 375, // ms
+    opacity: 0.25, // Base Opacity
+    color: "rgb(168 168 168)", // Hex Color
+  };
+
+  // derived color for rgba manipulation
+  let rgbColor = { r: 168, g: 168, b: 168 };
+
+  const MAX_RIPPLES = 32;
+  const TARGET_FPS = 120;
+  const FRAME_TIME = 1000 / TARGET_FPS;
+
+  // --- Helper: Hex to RGB ---
+  function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : { r: 168, g: 168, b: 168 };
+  }
+
+  // --- Initialization Logic ---
+  function init() {
+    // Load settings from storage
+    chrome.storage.sync.get(config, (items) => {
+      updateConfig(items);
+      if (config.enabled) {
+        setupCanvas();
+        addListeners();
+      }
+    });
+
+    // Listen for changes from the Popup
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+      if (namespace === "sync") {
+        const newSettings = {};
+        for (let key in changes) {
+          newSettings[key] = changes[key].newValue;
+        }
+        updateConfig(newSettings);
+      }
+    });
+  }
+
+  function updateConfig(newConfig) {
+    // Merge new settings
+    config = { ...config, ...newConfig };
+    rgbColor = hexToRgb(config.color);
+
+    // Handle Enable/Disable toggle
+    if (config.enabled && !canvas) {
+      setupCanvas();
+      addListeners();
+    } else if (!config.enabled && canvas) {
+      cleanup();
+    }
+
+    // Update opacity live if canvas exists
+    if (canvas) {
+      canvas.style.opacity = config.opacity;
+    }
+  }
+
+  // --- Canvas Logic ---
+  function setupCanvas() {
+    if (canvas) return; // Already exists
+
+    try {
+      canvas = document.createElement("canvas");
+      canvas.id = "ripple-fx-canvas";
+      canvas.style.cssText = `
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          opacity: ${config.opacity} !important;
+          visibility: visible !important;
+          display: block !important;
+          transform: none !important;
+        `;
+
+      ctx = canvas.getContext("2d", {
+        alpha: true,
+        desynchronized: true,
+      });
+
+      if (!ctx) return;
+
+      const targetParent = document.body || document.documentElement;
+      if (targetParent.firstChild) {
+        targetParent.insertBefore(canvas, targetParent.firstChild);
+      } else {
+        targetParent.appendChild(canvas);
+      }
+
+      resizeCanvas();
+    } catch (e) {
+      console.warn("RippleFX: Init failed", e);
+    }
+  }
+
+  function resizeCanvas() {
+    if (!canvas || !ctx) return;
+    const vw = Math.max(
+      document.documentElement.clientWidth || 0,
+      window.innerWidth || 0
+    );
+    const vh = Math.max(
+      document.documentElement.clientHeight || 0,
+      window.innerHeight || 0
+    );
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    canvas.width = vw * dpr;
+    canvas.height = vh * dpr;
+    ctx.scale(dpr, dpr);
+    canvas.style.width = vw + "px";
+    canvas.style.height = vh + "px";
+  }
+
+  // --- Animation Loop ---
+  function addRipple(x, y) {
+    if (!config.enabled || !ctx) return;
+
+    if (ripples.length >= MAX_RIPPLES) ripples.shift();
+
+    ripples.push({
+      x: x,
+      y: y,
+      startTime: performance.now(),
+      maxRadius: Number(config.size), // Ensure it's a number
+    });
+
+    if (animationId === null) {
+      lastFrameTime = performance.now();
+      animationId = requestAnimationFrame(drawRipples);
+    }
+  }
+
+  function drawRipples(timestamp) {
+    if (!ctx || !canvas) return;
+
+    const elapsed = timestamp - lastFrameTime;
+    if (elapsed < FRAME_TIME - 1) {
+      animationId = requestAnimationFrame(drawRipples);
+      return;
+    }
+
+    lastFrameTime = timestamp - (elapsed % FRAME_TIME);
+    const now = performance.now();
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const ripple = ripples[i];
+      const elapsedTime = now - ripple.startTime;
+      const progress = Math.min(elapsedTime / Number(config.duration), 1);
+
+      if (progress >= 1) {
+        ripples.splice(i, 1);
+        continue;
+      }
+
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const currentRadius = ripple.maxRadius * eased * 2;
+      const currentOpacity = 1 - progress;
+
+      ctx.beginPath();
+      ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
+      // Use dynamic color settings
+      ctx.fillStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${currentOpacity})`;
+      ctx.fill();
+    }
+
+    if (ripples.length > 0) {
+      animationId = requestAnimationFrame(drawRipples);
+    } else {
+      animationId = null;
+    }
+  }
+
+  // --- Event Handling ---
+  function handleClick(event) {
+    if (!event.isTrusted) return;
+    addRipple(event.clientX, event.clientY);
+  }
+
+  function addListeners() {
+    document.addEventListener("click", handleClick, {
+      passive: true,
+      capture: true,
+    });
+    window.addEventListener("resize", resizeCanvas, { passive: true });
+  }
+
+  function cleanup() {
+    if (animationId !== null) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    if (canvas) {
+      canvas.remove();
+      canvas = null;
+      ctx = null;
+    }
+    ripples = [];
+    document.removeEventListener("click", handleClick, { capture: true });
+    window.removeEventListener("resize", resizeCanvas);
+  }
+
+  // --- Bootstrap ---
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  } else {
+    init();
+  }
+})();
+</file>
+
+<file path="manifest.json">
+{
+  "manifest_version": 3,
+  "name": "RippleFX",
+  "version": "1.0",
+  "author": "limpdev",
+  "description": "Adds a 120Hz high-performance, customizable ripple effect to clicks on any webpage.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
+</file>
+
+</files>

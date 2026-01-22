@@ -1,10 +1,25 @@
 {
+  "name": "ripplefx",
+  "version": "1.0.0",
+  "description": "High-performance ripple effect browser extension",
+  "scripts": {
+    "build": "node build.js",
+    "build:cross": "node xbuild.js",
+    "build:chrome": "BROWSER=chrome node build-cross.js",
+    "build:firefox": "BROWSER=firefox node build-cross.js",
+    "build:edge": "BROWSER=edge node build-cross.js",
+    "package": "yarn build:cross && npm run zip:all",
+    "zip:all": "yarn zip:chrome && npm run zip:firefox && npm run zip:edge",
+    "zip:chrome": "cd dist-chrome && zip -r ../ripplefx-chrome.zip . && cd ..",
+    "zip:firefox": "cd dist-firefox && zip -r ../ripplefx-firefox.zip . && cd ..",
+    "zip:edge": "cd dist-edge && zip -r ../ripplefx-edge.zip . && cd ..",
+    "watch": "node build.js && echo 'Watching...' || exit 0"
+  },
   "dependencies": {
     "esbuild": "^0.27.1",
     "html-minifier-terser": "^7.2.0"
   },
-  "scripts": {
-    "build": "node build.js",
-    "watch": "node build.js && echo 'Watching...' || exit 0"
+  "devDependencies": {
+    "archiver": "^7.0.1"
   }
 }
