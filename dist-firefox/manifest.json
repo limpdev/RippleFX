@@ -5,9 +5,7 @@
   "author": "limpdev",
   "description": "Adds a 120Hz high-performance, customizable ripple effect to clicks on any webpage.",
   "permissions": [
-    "storage",
-    "activeTab",
-    "scripting"
+    "storage"
   ],
   "content_scripts": [
     {
