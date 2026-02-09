@@ -1,4 +1,5 @@
-This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+This file is a merged representation of a subset of the codebase, containing specifically included files and files not matching ignore patterns, combined into a single document by Repomix.
+The content has been processed where empty lines have been removed.
 
 <file_summary>
 This section contains a summary of this file.
@@ -32,20 +33,42 @@ The content is organized as follows:
 <notes>
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
-- Only files matching these patterns are included: **/*.json, **/*.css, **/*.js
+- Only files matching these patterns are included: **/*.js, **/*.json, **/*.html
+- Files matching these patterns are excluded: node_modules, **/node_modules, **/.venv/**, **/venv/**, **/yarn.lock, **/*.md, dist
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
+- Empty lines have been removed from all files
+- Long base64 data strings (e.g., data:image/png;base64,...) have been truncated to reduce token count
 - Files are sorted by Git change count (files with more changes are at the bottom)
 </notes>
 
 </file_summary>
 
 <directory_structure>
+dist-chrome/
+dist-edge/
+dist-firefox/
+docs/
 build.js
 content.js
+dist-chrome/content.js
+dist-chrome/manifest.json
+dist-chrome/popup.html
+dist-chrome/popup.js
+dist-edge/content.js
+dist-edge/manifest.json
+dist-edge/popup.html
+dist-edge/popup.js
+dist-firefox/content.js
+dist-firefox/manifest.json
+dist-firefox/popup.html
+dist-firefox/popup.js
 manifest.json
+package.js
 package.json
+popup.html
 popup.js
+xbuild.js
 </directory_structure>
 
 <files>
@@ -53,24 +76,19 @@ This section contains the contents of the repository's files.
 
 <file path="build.js">
 #!/usr/bin/env node
-
 // Build script for RippleFX Chrome Extension
 // Minifies and bundles all extension files
-
 const esbuild = require('esbuild');
 const fs = require('fs');
 const path = require('path');
-
 const distDir = 'dist';
 const iconsDir = path.join(distDir, 'icons');
-
 // Clean and create dist directory
 if (fs.existsSync(distDir)) {
   fs.rmSync(distDir, { recursive: true });
 }
 fs.mkdirSync(distDir);
 fs.mkdirSync(iconsDir);
-
 // Build content script
 esbuild.buildSync({
   entryPoints: ['content.js'],
@@ -80,7 +98,6 @@ esbuild.buildSync({
   target: 'chrome90',
   format: 'iife',
 });
-
 // Build popup script
 esbuild.buildSync({
   entryPoints: ['popup.js'],
@@ -88,20 +105,16 @@ esbuild.buildSync({
   outfile: path.join(distDir, 'popup.js'),
   target: 'chrome90',
 });
-
 // Minify popup HTML
 const popupHtml = fs.readFileSync('popup.html', 'utf8');
 const minifiedHtml = popupHtml
   .replace(/\n\s+/g, '') // Remove newlines and indentation
   .replace(/>\s+</g, '><') // Remove whitespace between tags
   .replace(/\s{2,}/g, ' '); // Collapse multiple spaces
-
 fs.writeFileSync(path.join(distDir, 'popup.html'), minifiedHtml);
-
 // Copy manifest and icons
 fs.copyFileSync('manifest.json', path.join(distDir, 'manifest.json'));
 fs.copyFileSync('LICENSE', path.join(distDir, 'LICENSE'));
-
 // Copy icon files
 const icons = ['icon16.png', 'icon48.png', 'icon128.png', 'icon1024.png'];
 icons.forEach(icon => {
@@ -111,12 +124,10 @@ icons.forEach(icon => {
     fs.copyFileSync(src, dest);
   }
 });
-
 console.log('✓ Build complete!');
 console.log(`✓ Content script: ${getFileSize('content.js')} → ${getFileSize(path.join(distDir, 'content.js'))}`);
 console.log(`✓ Popup script: ${getFileSize('popup.js')} → ${getFileSize(path.join(distDir, 'popup.js'))}`);
 console.log(`✓ Popup HTML: ${getFileSize('popup.html')} → ${getFileSize(path.join(distDir, 'popup.html'))}`);
-
 function getFileSize(filepath) {
   const stats = fs.statSync(filepath);
   const kb = (stats.size / 1024).toFixed(2);
@@ -124,17 +135,115 @@ function getFileSize(filepath) {
 }
 </file>
 
-<file path="package.json">
-{
-  "dependencies": {
-    "esbuild": "^0.27.1",
-    "html-minifier-terser": "^7.2.0"
-  },
-  "scripts": {
-    "build": "node build.js",
-    "watch": "node build.js && echo 'Watching...' || exit 0"
+<file path="dist-chrome/content.js">
+(()=>{(()=>{"use strict";let t,i,a=[],s=null,u=0,r={enabled:!0,size:8,duration:375,opacity:.25,color:"rgb(168 168 168)"},l={r:168,g:168,b:168},x=32,h=1e3/120;function E(e){let n=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(e);return n?{r:parseInt(n[1],16),g:parseInt(n[2],16),b:parseInt(n[3],16)}:{r:168,g:168,b:168}}function g(){chrome.storage.sync.get(r,e=>{w(e),r.enabled&&(y(),b())}),chrome.storage.onChanged.addListener((e,n)=>{if(n==="sync"){let o={};for(let c in e)o[c]=e[c].newValue;w(o)}})}function w(e){r={...r,...e},l=E(r.color),r.enabled&&!t?(y(),b()):!r.enabled&&t&&T(),t&&(t.style.opacity=r.opacity)}function y(){if(!t)try{if(t=document.createElement("canvas"),t.id="ripple-fx-canvas",t.style.cssText=`
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          opacity: ${r.opacity} !important;
+          visibility: visible !important;
+          display: block !important;
+          transform: none !important;
+        `,i=t.getContext("2d",{alpha:!0,desynchronized:!0}),!i)return;let e=document.body||document.documentElement;e.firstChild?e.insertBefore(t,e.firstChild):e.appendChild(t),p()}catch(e){console.warn("RippleFX: Init failed",e)}}function p(){if(!t||!i)return;let e=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0),n=Math.max(document.documentElement.clientHeight||0,window.innerHeight||0),o=Math.min(2,window.devicePixelRatio||1);t.width=e*o,t.height=n*o,i.scale(o,o),t.style.width=e+"px",t.style.height=n+"px"}function R(e,n){!r.enabled||!i||(a.length>=x&&a.shift(),a.push({x:e,y:n,startTime:performance.now(),maxRadius:Number(r.size)}),s===null&&(u=performance.now(),s=requestAnimationFrame(m)))}function m(e){if(!i||!t)return;let n=e-u;if(n<h-1){s=requestAnimationFrame(m);return}u=e-n%h;let o=performance.now();i.clearRect(0,0,t.width,t.height);for(let c=a.length-1;c>=0;c--){let d=a[c],C=o-d.startTime,f=Math.min(C/Number(r.duration),1);if(f>=1){a.splice(c,1);continue}let M=1-Math.pow(1-f,3),F=d.maxRadius*M*2,L=1-f;i.beginPath(),i.arc(d.x,d.y,F,0,Math.PI*2),i.fillStyle=`rgba(${l.r}, ${l.g}, ${l.b}, ${L})`,i.fill()}a.length>0?s=requestAnimationFrame(m):s=null}function v(e){e.isTrusted&&R(e.clientX,e.clientY)}function b(){document.addEventListener("click",v,{passive:!0,capture:!0}),window.addEventListener("resize",p,{passive:!0})}function T(){s!==null&&(cancelAnimationFrame(s),s=null),t&&(t.remove(),t=null,i=null),a=[],document.removeEventListener("click",v,{capture:!0}),window.removeEventListener("resize",p)}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",g,{once:!0}):g()})();})();
+</file>
+
+<file path="dist-chrome/popup.js">
+document.addEventListener("DOMContentLoaded",()=>{const e={enabled:document.getElementById("enabled"),size:document.getElementById("size"),duration:document.getElementById("duration"),opacity:document.getElementById("opacity"),color:document.getElementById("color"),sizeVal:document.getElementById("sizeVal"),durVal:document.getElementById("durVal"),opVal:document.getElementById("opVal")},n={enabled:!0,size:8,duration:375,opacity:.25,color:"#a8a8a8"};chrome.storage.sync.get(n,t=>{e.enabled.checked=t.enabled,e.size.value=t.size,e.duration.value=t.duration,e.opacity.value=t.opacity,e.color.value=t.color,a()}),Object.keys(e).forEach(t=>{t.includes("Val")||e[t].addEventListener("input",()=>{a(),o()})});function a(){e.sizeVal.textContent=e.size.value,e.durVal.textContent=e.duration.value,e.opVal.textContent=e.opacity.value}function o(){const t={enabled:e.enabled.checked,size:parseInt(e.size.value),duration:parseInt(e.duration.value),opacity:parseFloat(e.opacity.value),color:e.color.value};chrome.storage.sync.set(t)}});
+</file>
+
+<file path="dist-edge/content.js">
+(()=>{(()=>{"use strict";let t,i,a=[],s=null,u=0,r={enabled:!0,size:8,duration:375,opacity:.25,color:"rgb(168 168 168)"},l={r:168,g:168,b:168},x=32,h=1e3/120;function E(e){let n=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(e);return n?{r:parseInt(n[1],16),g:parseInt(n[2],16),b:parseInt(n[3],16)}:{r:168,g:168,b:168}}function g(){chrome.storage.sync.get(r,e=>{w(e),r.enabled&&(y(),b())}),chrome.storage.onChanged.addListener((e,n)=>{if(n==="sync"){let o={};for(let c in e)o[c]=e[c].newValue;w(o)}})}function w(e){r={...r,...e},l=E(r.color),r.enabled&&!t?(y(),b()):!r.enabled&&t&&T(),t&&(t.style.opacity=r.opacity)}function y(){if(!t)try{if(t=document.createElement("canvas"),t.id="ripple-fx-canvas",t.style.cssText=`
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          opacity: ${r.opacity} !important;
+          visibility: visible !important;
+          display: block !important;
+          transform: none !important;
+        `,i=t.getContext("2d",{alpha:!0,desynchronized:!0}),!i)return;let e=document.body||document.documentElement;e.firstChild?e.insertBefore(t,e.firstChild):e.appendChild(t),p()}catch(e){console.warn("RippleFX: Init failed",e)}}function p(){if(!t||!i)return;let e=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0),n=Math.max(document.documentElement.clientHeight||0,window.innerHeight||0),o=Math.min(2,window.devicePixelRatio||1);t.width=e*o,t.height=n*o,i.scale(o,o),t.style.width=e+"px",t.style.height=n+"px"}function R(e,n){!r.enabled||!i||(a.length>=x&&a.shift(),a.push({x:e,y:n,startTime:performance.now(),maxRadius:Number(r.size)}),s===null&&(u=performance.now(),s=requestAnimationFrame(m)))}function m(e){if(!i||!t)return;let n=e-u;if(n<h-1){s=requestAnimationFrame(m);return}u=e-n%h;let o=performance.now();i.clearRect(0,0,t.width,t.height);for(let c=a.length-1;c>=0;c--){let d=a[c],C=o-d.startTime,f=Math.min(C/Number(r.duration),1);if(f>=1){a.splice(c,1);continue}let M=1-Math.pow(1-f,3),F=d.maxRadius*M*2,L=1-f;i.beginPath(),i.arc(d.x,d.y,F,0,Math.PI*2),i.fillStyle=`rgba(${l.r}, ${l.g}, ${l.b}, ${L})`,i.fill()}a.length>0?s=requestAnimationFrame(m):s=null}function v(e){e.isTrusted&&R(e.clientX,e.clientY)}function b(){document.addEventListener("click",v,{passive:!0,capture:!0}),window.addEventListener("resize",p,{passive:!0})}function T(){s!==null&&(cancelAnimationFrame(s),s=null),t&&(t.remove(),t=null,i=null),a=[],document.removeEventListener("click",v,{capture:!0}),window.removeEventListener("resize",p)}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",g,{once:!0}):g()})();})();
+</file>
+
+<file path="dist-edge/popup.js">
+document.addEventListener("DOMContentLoaded",()=>{const e={enabled:document.getElementById("enabled"),size:document.getElementById("size"),duration:document.getElementById("duration"),opacity:document.getElementById("opacity"),color:document.getElementById("color"),sizeVal:document.getElementById("sizeVal"),durVal:document.getElementById("durVal"),opVal:document.getElementById("opVal")},n={enabled:!0,size:8,duration:375,opacity:.25,color:"#a8a8a8"};chrome.storage.sync.get(n,t=>{e.enabled.checked=t.enabled,e.size.value=t.size,e.duration.value=t.duration,e.opacity.value=t.opacity,e.color.value=t.color,a()}),Object.keys(e).forEach(t=>{t.includes("Val")||e[t].addEventListener("input",()=>{a(),o()})});function a(){e.sizeVal.textContent=e.size.value,e.durVal.textContent=e.duration.value,e.opVal.textContent=e.opacity.value}function o(){const t={enabled:e.enabled.checked,size:parseInt(e.size.value),duration:parseInt(e.duration.value),opacity:parseFloat(e.opacity.value),color:e.color.value};chrome.storage.sync.set(t)}});
+</file>
+
+<file path="dist-firefox/content.js">
+(()=>{typeof browser<"u"&&!self.chrome&&(self.chrome=browser);(()=>{"use strict";let t,i,a=[],s=null,u=0,r={enabled:!0,size:8,duration:375,opacity:.25,color:"rgb(168 168 168)"},l={r:168,g:168,b:168},x=32,h=1e3/120;function E(e){let n=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(e);return n?{r:parseInt(n[1],16),g:parseInt(n[2],16),b:parseInt(n[3],16)}:{r:168,g:168,b:168}}function g(){chrome.storage.sync.get(r,e=>{w(e),r.enabled&&(y(),v())}),chrome.storage.onChanged.addListener((e,n)=>{if(n==="sync"){let o={};for(let c in e)o[c]=e[c].newValue;w(o)}})}function w(e){r={...r,...e},l=E(r.color),r.enabled&&!t?(y(),v()):!r.enabled&&t&&T(),t&&(t.style.opacity=r.opacity)}function y(){if(!t)try{if(t=document.createElement("canvas"),t.id="ripple-fx-canvas",t.style.cssText=`
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          pointer-events: none !important;
+          z-index: 2147483647 !important;
+          opacity: ${r.opacity} !important;
+          visibility: visible !important;
+          display: block !important;
+          transform: none !important;
+        `,i=t.getContext("2d",{alpha:!0,desynchronized:!0}),!i)return;let e=document.body||document.documentElement;e.firstChild?e.insertBefore(t,e.firstChild):e.appendChild(t),m()}catch(e){console.warn("RippleFX: Init failed",e)}}function m(){if(!t||!i)return;let e=Math.max(document.documentElement.clientWidth||0,window.innerWidth||0),n=Math.max(document.documentElement.clientHeight||0,window.innerHeight||0),o=Math.min(2,window.devicePixelRatio||1);t.width=e*o,t.height=n*o,i.scale(o,o),t.style.width=e+"px",t.style.height=n+"px"}function R(e,n){!r.enabled||!i||(a.length>=x&&a.shift(),a.push({x:e,y:n,startTime:performance.now(),maxRadius:Number(r.size)}),s===null&&(u=performance.now(),s=requestAnimationFrame(p)))}function p(e){if(!i||!t)return;let n=e-u;if(n<h-1){s=requestAnimationFrame(p);return}u=e-n%h;let o=performance.now();i.clearRect(0,0,t.width,t.height);for(let c=a.length-1;c>=0;c--){let d=a[c],C=o-d.startTime,f=Math.min(C/Number(r.duration),1);if(f>=1){a.splice(c,1);continue}let M=1-Math.pow(1-f,3),F=d.maxRadius*M*2,L=1-f;i.beginPath(),i.arc(d.x,d.y,F,0,Math.PI*2),i.fillStyle=`rgba(${l.r}, ${l.g}, ${l.b}, ${L})`,i.fill()}a.length>0?s=requestAnimationFrame(p):s=null}function b(e){e.isTrusted&&R(e.clientX,e.clientY)}function v(){document.addEventListener("click",b,{passive:!0,capture:!0}),window.addEventListener("resize",m,{passive:!0})}function T(){s!==null&&(cancelAnimationFrame(s),s=null),t&&(t.remove(),t=null,i=null),a=[],document.removeEventListener("click",b,{capture:!0}),window.removeEventListener("resize",m)}document.readyState==="loading"?document.addEventListener("DOMContentLoaded",g,{once:!0}):g()})();})();
+</file>
+
+<file path="dist-firefox/popup.js">
+document.addEventListener("DOMContentLoaded",()=>{const e={enabled:document.getElementById("enabled"),size:document.getElementById("size"),duration:document.getElementById("duration"),opacity:document.getElementById("opacity"),color:document.getElementById("color"),sizeVal:document.getElementById("sizeVal"),durVal:document.getElementById("durVal"),opVal:document.getElementById("opVal")},n={enabled:!0,size:8,duration:375,opacity:.25,color:"#a8a8a8"};chrome.storage.sync.get(n,t=>{e.enabled.checked=t.enabled,e.size.value=t.size,e.duration.value=t.duration,e.opacity.value=t.opacity,e.color.value=t.color,a()}),Object.keys(e).forEach(t=>{t.includes("Val")||e[t].addEventListener("input",()=>{a(),o()})});function a(){e.sizeVal.textContent=e.size.value,e.durVal.textContent=e.duration.value,e.opVal.textContent=e.opacity.value}function o(){const t={enabled:e.enabled.checked,size:parseInt(e.size.value),duration:parseInt(e.duration.value),opacity:parseFloat(e.opacity.value),color:e.color.value};chrome.storage.sync.set(t)}});
+</file>
+
+<file path="package.js">
+#!/usr/bin/env node
+// Package script for creating distributable .zip files
+// Works cross-platform (Windows, Mac, Linux)
+const fs = require("fs");
+const path = require("path");
+const archiver = require("archiver");
+const BROWSERS = ["chrome", "firefox", "edge"];
+console.log("📦 Packaging RippleFX extensions...\n");
+async function packageBrowser(browser) {
+  const distDir = `dist-${browser}`;
+  const outputFile = `ripplefx-${browser}.zip`;
+  if (!fs.existsSync(distDir)) {
+    console.log(`⚠️  ${distDir} not found. Run 'yarn build:cross' first.`);
+    return;
   }
+  // Remove existing zip if present
+  if (fs.existsSync(outputFile)) {
+    fs.unlinkSync(outputFile);
+  }
+  return new Promise((resolve, reject) => {
+    const output = fs.createWriteStream(outputFile);
+    const archive = archiver("zip", { zlib: { level: 9 } });
+    output.on("close", () => {
+      const sizeMB = (archive.pointer() / 1024 / 1024).toFixed(2);
+      console.log(`✓ ${outputFile} (${sizeMB} MB)`);
+      resolve();
+    });
+    archive.on("error", reject);
+    archive.pipe(output);
+    // Add all files from dist directory
+    archive.directory(distDir, false);
+    archive.finalize();
+  });
 }
+async function packageAll() {
+  for (const browser of BROWSERS) {
+    await packageBrowser(browser);
+  }
+  console.log("\n✅ All packages created!");
+  console.log("\n📤 Ready to upload:");
+  console.log("   - ripplefx-chrome.zip → Chrome Web Store");
+  console.log("   - ripplefx-firefox.zip → Firefox Add-ons");
+  console.log("   - ripplefx-edge.zip → Edge Add-ons");
+}
+packageAll().catch((err) => {
+  console.error("❌ Packaging failed:", err);
+  process.exit(1);
+});
 </file>
 
 <file path="popup.js">
@@ -151,7 +260,6 @@ document.addEventListener("DOMContentLoaded", () => {
     durVal: document.getElementById("durVal"),
     opVal: document.getElementById("opVal"),
   };
-
   // Defaults (must match content.js)
   const defaults = {
     enabled: true,
@@ -160,7 +268,6 @@ document.addEventListener("DOMContentLoaded", () => {
     opacity: 0.25,
     color: "#a8a8a8",
   };
-
   // Load saved settings
   chrome.storage.sync.get(defaults, (items) => {
     els.enabled.checked = items.enabled;
@@ -168,26 +275,21 @@ document.addEventListener("DOMContentLoaded", () => {
     els.duration.value = items.duration;
     els.opacity.value = items.opacity;
     els.color.value = items.color;
-
     updateLabels();
   });
-
   // Event Listeners for all inputs
   Object.keys(els).forEach((key) => {
     if (key.includes("Val")) return; // skip labels
-
     els[key].addEventListener("input", () => {
       updateLabels();
       saveSettings();
     });
   });
-
   function updateLabels() {
     els.sizeVal.textContent = els.size.value;
     els.durVal.textContent = els.duration.value;
     els.opVal.textContent = els.opacity.value;
   }
-
   function saveSettings() {
     const settings = {
       enabled: els.enabled.checked,
@@ -196,23 +298,123 @@ document.addEventListener("DOMContentLoaded", () => {
       opacity: parseFloat(els.opacity.value),
       color: els.color.value,
     };
-
     chrome.storage.sync.set(settings);
   }
 });
 </file>
 
+<file path="xbuild.js">
+#!/usr/bin/env node
+// Cross-browser build script for RippleFX
+// Builds for Chrome, Firefox, and Edge with proper manifests
+const esbuild = require('esbuild');
+const fs = require('fs');
+const path = require('path');
+const BROWSERS = ['chrome', 'firefox', 'edge'];
+// Clean all dist directories
+BROWSERS.forEach(browser => {
+  const distDir = `dist-${browser}`;
+  if (fs.existsSync(distDir)) {
+    fs.rmSync(distDir, { recursive: true });
+  }
+});
+console.log('🔨 Building RippleFX for multiple browsers...\n');
+BROWSERS.forEach(browser => {
+  buildForBrowser(browser);
+});
+console.log('\n✅ All builds complete!');
+console.log('\n📦 Ready to package:');
+BROWSERS.forEach(browser => {
+  console.log(`   - dist-${browser}/ → ${browser === 'firefox' ? 'Firefox Add-ons' : 'Chrome Web Store'}`);
+});
+function buildForBrowser(browser) {
+  const distDir = `dist-${browser}`;
+  const iconsDir = path.join(distDir, 'icons');
+  console.log(`📦 Building for ${browser}...`);
+  // Create directories
+  fs.mkdirSync(distDir);
+  fs.mkdirSync(iconsDir);
+  // Build content script with browser-specific wrapper
+  const contentWrapper = browser === 'firefox' 
+    ? '(() => { if (typeof browser !== "undefined" && !self.chrome) { self.chrome = browser; } })();\n'
+    : '';
+  const contentCode = fs.readFileSync('content.js', 'utf8');
+  const wrappedContent = contentWrapper + contentCode;
+  fs.writeFileSync('_temp_content.js', wrappedContent);
+  esbuild.buildSync({
+    entryPoints: ['_temp_content.js'],
+    bundle: true,
+    minify: true,
+    outfile: path.join(distDir, 'content.js'),
+    target: browser === 'firefox' ? 'firefox109' : 'chrome90',
+    format: 'iife',
+  });
+  fs.unlinkSync('_temp_content.js');
+  // Build popup script
+  esbuild.buildSync({
+    entryPoints: ['popup.js'],
+    minify: true,
+    outfile: path.join(distDir, 'popup.js'),
+    target: browser === 'firefox' ? 'firefox109' : 'chrome90',
+  });
+  // Minify popup HTML
+  const popupHtml = fs.readFileSync('popup.html', 'utf8');
+  const minifiedHtml = popupHtml
+    .replace(/\n\s+/g, '')
+    .replace(/>\s+</g, '><')
+    .replace(/\s{2,}/g, ' ');
+  fs.writeFileSync(path.join(distDir, 'popup.html'), minifiedHtml);
+  // Create browser-specific manifest
+  const manifest = createManifest(browser);
+  fs.writeFileSync(
+    path.join(distDir, 'manifest.json'),
+    JSON.stringify(manifest, null, 2)
+  );
+  // Copy LICENSE
+  fs.copyFileSync('LICENSE', path.join(distDir, 'LICENSE'));
+  // Copy icons
+  const icons = ['icon16.png', 'icon48.png', 'icon128.png', 'icon1024.png'];
+  icons.forEach(icon => {
+    const src = path.join('icons', icon);
+    const dest = path.join(iconsDir, icon);
+    if (fs.existsSync(src)) {
+      fs.copyFileSync(src, dest);
+    }
+  });
+  console.log(`   ✓ ${browser} build: ${getFileSize(path.join(distDir, 'content.js'))}`);
+}
+function createManifest(browser) {
+  const baseManifest = JSON.parse(fs.readFileSync('manifest.json', 'utf8'));
+  if (browser === 'firefox') {
+    // Firefox-specific additions
+    baseManifest.browser_specific_settings = {
+      gecko: {
+        id: 'ripplefx@limpdev.com',
+        strict_min_version: '109.0'
+      }
+    };
+  } else if (browser === 'edge') {
+    // Edge uses same manifest as Chrome but with optional tweaks
+    baseManifest.author = baseManifest.author || 'limpdev';
+  }
+  return baseManifest;
+}
+function getFileSize(filepath) {
+  const stats = fs.statSync(filepath);
+  const kb = (stats.size / 1024).toFixed(2);
+  return `${kb} KB`;
+}
+</file>
+
 <file path="content.js">
 (() => {
   "use strict";
-
   // State Management
   let canvas,
     ctx,
     ripples = [];
   let animationId = null;
   let lastFrameTime = 0;
-
   // Default Settings
   let config = {
     enabled: true,
@@ -221,14 +423,11 @@ document.addEventListener("DOMContentLoaded", () => {
     opacity: 0.25, // Base Opacity
     color: "rgb(168 168 168)", // Hex Color
   };
-
   // derived color for rgba manipulation
   let rgbColor = { r: 168, g: 168, b: 168 };
-
   const MAX_RIPPLES = 32;
   const TARGET_FPS = 120;
   const FRAME_TIME = 1000 / TARGET_FPS;
-
   // --- Helper: Hex to RGB ---
   function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -240,7 +439,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       : { r: 168, g: 168, b: 168 };
   }
-
   // --- Initialization Logic ---
   function init() {
     // Load settings from storage
@@ -251,7 +449,6 @@ document.addEventListener("DOMContentLoaded", () => {
         addListeners();
       }
     });
-
     // Listen for changes from the Popup
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === "sync") {
@@ -263,12 +460,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
   function updateConfig(newConfig) {
     // Merge new settings
     config = { ...config, ...newConfig };
     rgbColor = hexToRgb(config.color);
-
     // Handle Enable/Disable toggle
     if (config.enabled && !canvas) {
       setupCanvas();
@@ -276,17 +471,14 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (!config.enabled && canvas) {
       cleanup();
     }
-
     // Update opacity live if canvas exists
     if (canvas) {
       canvas.style.opacity = config.opacity;
     }
   }
-
   // --- Canvas Logic ---
   function setupCanvas() {
     if (canvas) return; // Already exists
-
     try {
       canvas = document.createElement("canvas");
       canvas.id = "ripple-fx-canvas";
@@ -303,27 +495,22 @@ document.addEventListener("DOMContentLoaded", () => {
           display: block !important;
           transform: none !important;
         `;
-
       ctx = canvas.getContext("2d", {
         alpha: true,
         desynchronized: true,
       });
-
       if (!ctx) return;
-
       const targetParent = document.body || document.documentElement;
       if (targetParent.firstChild) {
         targetParent.insertBefore(canvas, targetParent.firstChild);
       } else {
         targetParent.appendChild(canvas);
       }
-
       resizeCanvas();
     } catch (e) {
       console.warn("RippleFX: Init failed", e);
     }
   }
-
   function resizeCanvas() {
     if (!canvas || !ctx) return;
     const vw = Math.max(
@@ -335,81 +522,65 @@ document.addEventListener("DOMContentLoaded", () => {
       window.innerHeight || 0
     );
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-
     canvas.width = vw * dpr;
     canvas.height = vh * dpr;
     ctx.scale(dpr, dpr);
     canvas.style.width = vw + "px";
     canvas.style.height = vh + "px";
   }
-
   // --- Animation Loop ---
   function addRipple(x, y) {
     if (!config.enabled || !ctx) return;
-
     if (ripples.length >= MAX_RIPPLES) ripples.shift();
-
     ripples.push({
       x: x,
       y: y,
       startTime: performance.now(),
       maxRadius: Number(config.size), // Ensure it's a number
     });
-
     if (animationId === null) {
       lastFrameTime = performance.now();
       animationId = requestAnimationFrame(drawRipples);
     }
   }
-
   function drawRipples(timestamp) {
     if (!ctx || !canvas) return;
-
     const elapsed = timestamp - lastFrameTime;
     if (elapsed < FRAME_TIME - 1) {
       animationId = requestAnimationFrame(drawRipples);
       return;
     }
-
     lastFrameTime = timestamp - (elapsed % FRAME_TIME);
     const now = performance.now();
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     for (let i = ripples.length - 1; i >= 0; i--) {
       const ripple = ripples[i];
       const elapsedTime = now - ripple.startTime;
       const progress = Math.min(elapsedTime / Number(config.duration), 1);
-
       if (progress >= 1) {
         ripples.splice(i, 1);
         continue;
       }
-
       const eased = 1 - Math.pow(1 - progress, 3);
       const currentRadius = ripple.maxRadius * eased * 2;
       const currentOpacity = 1 - progress;
-
       ctx.beginPath();
       ctx.arc(ripple.x, ripple.y, currentRadius, 0, Math.PI * 2);
       // Use dynamic color settings
       ctx.fillStyle = `rgba(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b}, ${currentOpacity})`;
       ctx.fill();
     }
-
     if (ripples.length > 0) {
       animationId = requestAnimationFrame(drawRipples);
     } else {
       animationId = null;
     }
   }
-
   // --- Event Handling ---
   function handleClick(event) {
     if (!event.isTrusted) return;
     addRipple(event.clientX, event.clientY);
   }
-
   function addListeners() {
     document.addEventListener("click", handleClick, {
       passive: true,
@@ -417,7 +588,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     window.addEventListener("resize", resizeCanvas, { passive: true });
   }
-
   function cleanup() {
     if (animationId !== null) {
       cancelAnimationFrame(animationId);
@@ -432,7 +602,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.removeEventListener("click", handleClick, { capture: true });
     window.removeEventListener("resize", resizeCanvas);
   }
-
   // --- Bootstrap ---
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init, { once: true });
@@ -440,6 +609,329 @@ document.addEventListener("DOMContentLoaded", () => {
     init();
   }
 })();
+</file>
+
+<file path="dist-chrome/popup.html">
+<!DOCTYPE html><html><head><style>body {width: 220px;padding: 15px;font-family: system-ui, sans-serif;background: #222;color: #ddd;}h2 {margin: 0 0 15px 0;font-size: 16px;text-align: center;border-bottom: 1px solid #444;padding-bottom: 10px;}.control-group {margin-bottom: 15px;}label {display: flex;justify-content: space-between;font-size: 12px;margin-bottom: 5px;color: #aaa;}input[type="range"] {width: 100%;cursor: ew-resize;}input[type="color"] {width: 100%;height: 30px;border: none;padding: 0;background: none;cursor: pointer;border-radius: 9px;}.toggle-row {display: flex;align-items: center;justify-content: space-between;margin-bottom: 15px;}.status-text {font-size: 14px;font-weight: bold;}/* Custom Toggle Switch */.switch {position: relative;display: inline-block;width: 40px;height: 20px;}.switch input {opacity: 0;width: 0;height: 0;}.slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background-color: #555;transition: .4s;border-radius: 20px;}.slider:before {position: absolute;content: "";height: 16px;width: 16px;left: 2px;bottom: 2px;background-color: white;transition: .4s;border-radius: 50%;}input:checked+.slider {background-color: #2196F3;}input:checked+.slider:before {transform: translateX(20px);}</style></head><body><h2>RippleFX Settings</h2><div class="toggle-row"><span class="status-text">Enable Effect</span><label class="switch"><input type="checkbox" id="enabled"><span class="slider"></span></label></div><div class="control-group"><label>Size (Radius) <span id="sizeVal">12</span></label><input type="range" id="size" min="5" max="50" value="8"></div><div class="control-group"><label>Duration (ms) <span id="durVal">375</span></label><input type="range" id="duration" min="100" max="1000" step="25" value="375"></div><div class="control-group"><label>Opacity <span id="opVal">0.35</span></label><input type="range" id="opacity" min="0.1" max="1.0" step="0.05" value="0.25"></div><div class="control-group"><label>Ripple Color</label><input type="color" id="color" value="#a8a8a8"></div><script src="popup.js"></script></body></html>
+</file>
+
+<file path="dist-edge/popup.html">
+<!DOCTYPE html><html><head><style>body {width: 220px;padding: 15px;font-family: system-ui, sans-serif;background: #222;color: #ddd;}h2 {margin: 0 0 15px 0;font-size: 16px;text-align: center;border-bottom: 1px solid #444;padding-bottom: 10px;}.control-group {margin-bottom: 15px;}label {display: flex;justify-content: space-between;font-size: 12px;margin-bottom: 5px;color: #aaa;}input[type="range"] {width: 100%;cursor: ew-resize;}input[type="color"] {width: 100%;height: 30px;border: none;padding: 0;background: none;cursor: pointer;border-radius: 9px;}.toggle-row {display: flex;align-items: center;justify-content: space-between;margin-bottom: 15px;}.status-text {font-size: 14px;font-weight: bold;}/* Custom Toggle Switch */.switch {position: relative;display: inline-block;width: 40px;height: 20px;}.switch input {opacity: 0;width: 0;height: 0;}.slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background-color: #555;transition: .4s;border-radius: 20px;}.slider:before {position: absolute;content: "";height: 16px;width: 16px;left: 2px;bottom: 2px;background-color: white;transition: .4s;border-radius: 50%;}input:checked+.slider {background-color: #2196F3;}input:checked+.slider:before {transform: translateX(20px);}</style></head><body><h2>RippleFX Settings</h2><div class="toggle-row"><span class="status-text">Enable Effect</span><label class="switch"><input type="checkbox" id="enabled"><span class="slider"></span></label></div><div class="control-group"><label>Size (Radius) <span id="sizeVal">12</span></label><input type="range" id="size" min="5" max="50" value="8"></div><div class="control-group"><label>Duration (ms) <span id="durVal">375</span></label><input type="range" id="duration" min="100" max="1000" step="25" value="375"></div><div class="control-group"><label>Opacity <span id="opVal">0.35</span></label><input type="range" id="opacity" min="0.1" max="1.0" step="0.05" value="0.25"></div><div class="control-group"><label>Ripple Color</label><input type="color" id="color" value="#a8a8a8"></div><script src="popup.js"></script></body></html>
+</file>
+
+<file path="dist-firefox/popup.html">
+<!DOCTYPE html><html><head><style>body {width: 220px;padding: 15px;font-family: system-ui, sans-serif;background: #222;color: #ddd;}h2 {margin: 0 0 15px 0;font-size: 16px;text-align: center;border-bottom: 1px solid #444;padding-bottom: 10px;}.control-group {margin-bottom: 15px;}label {display: flex;justify-content: space-between;font-size: 12px;margin-bottom: 5px;color: #aaa;}input[type="range"] {width: 100%;cursor: ew-resize;}input[type="color"] {width: 100%;height: 30px;border: none;padding: 0;background: none;cursor: pointer;border-radius: 9px;}.toggle-row {display: flex;align-items: center;justify-content: space-between;margin-bottom: 15px;}.status-text {font-size: 14px;font-weight: bold;}/* Custom Toggle Switch */.switch {position: relative;display: inline-block;width: 40px;height: 20px;}.switch input {opacity: 0;width: 0;height: 0;}.slider {position: absolute;cursor: pointer;top: 0;left: 0;right: 0;bottom: 0;background-color: #555;transition: .4s;border-radius: 20px;}.slider:before {position: absolute;content: "";height: 16px;width: 16px;left: 2px;bottom: 2px;background-color: white;transition: .4s;border-radius: 50%;}input:checked+.slider {background-color: #2196F3;}input:checked+.slider:before {transform: translateX(20px);}</style></head><body><h2>RippleFX Settings</h2><div class="toggle-row"><span class="status-text">Enable Effect</span><label class="switch"><input type="checkbox" id="enabled"><span class="slider"></span></label></div><div class="control-group"><label>Size (Radius) <span id="sizeVal">12</span></label><input type="range" id="size" min="5" max="50" value="8"></div><div class="control-group"><label>Duration (ms) <span id="durVal">375</span></label><input type="range" id="duration" min="100" max="1000" step="25" value="375"></div><div class="control-group"><label>Opacity <span id="opVal">0.35</span></label><input type="range" id="opacity" min="0.1" max="1.0" step="0.05" value="0.25"></div><div class="control-group"><label>Ripple Color</label><input type="color" id="color" value="#a8a8a8"></div><script src="popup.js"></script></body></html>
+</file>
+
+<file path="popup.html">
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            width: 220px;
+            padding: 15px;
+            font-family: system-ui, sans-serif;
+            background: #222;
+            color: #ddd;
+        }
+        h2 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            text-align: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        input[type="range"] {
+            width: 100%;
+            cursor: ew-resize;
+        }
+        input[type="color"] {
+            width: 100%;
+            height: 30px;
+            border: none;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+            border-radius: 9px;
+        }
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .status-text {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        /* Custom Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked+.slider {
+            background-color: #2196F3;
+        }
+        input:checked+.slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body>
+    <h2>RippleFX Settings</h2>
+    <div class="toggle-row">
+        <span class="status-text">Enable Effect</span>
+        <label class="switch">
+            <input type="checkbox" id="enabled">
+            <span class="slider"></span>
+        </label>
+    </div>
+    <div class="control-group">
+        <label>Size (Radius) <span id="sizeVal">12</span></label>
+        <input type="range" id="size" min="5" max="50" value="8">
+    </div>
+    <div class="control-group">
+        <label>Duration (ms) <span id="durVal">375</span></label>
+        <input type="range" id="duration" min="100" max="1000" step="25" value="375">
+    </div>
+    <div class="control-group">
+        <label>Opacity <span id="opVal">0.35</span></label>
+        <input type="range" id="opacity" min="0.1" max="1.0" step="0.05" value="0.25">
+    </div>
+    <div class="control-group">
+        <label>Ripple Color</label>
+        <input type="color" id="color" value="#a8a8a8">
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
+</file>
+
+<file path="package.json">
+{
+  "name": "ripplefx",
+  "version": "1.0.0",
+  "description": "High-performance ripple effect browser extension",
+  "scripts": {
+    "build": "node build.js",
+    "build:all": "node xbuild.js",
+    "build:chrome": "BROWSER=chrome node xbuild.js",
+    "build:firefox": "BROWSER=firefox node xbuild.js",
+    "build:edge": "BROWSER=edge node xbuild.js",
+    "package": "yarn build:all && npm run zip:all",
+    "zip:all": "yarn zip:chrome && npm run zip:firefox && npm run zip:edge",
+    "zip:chrome": "cd dist-chrome && zip -r ../ripplefx-chrome.zip . && cd ..",
+    "zip:firefox": "cd dist-firefox && zip -r ../ripplefx-firefox.zip . && cd ..",
+    "zip:edge": "cd dist-edge && zip -r ../ripplefx-edge.zip . && cd ..",
+    "watch": "node build.js && echo 'Watching...' || exit 0"
+  },
+  "dependencies": {
+    "esbuild": "^0.27.1",
+    "html-minifier-terser": "^7.2.0"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1"
+  }
+}
+</file>
+
+<file path="dist-chrome/manifest.json">
+{
+  "manifest_version": 3,
+  "name": "RippleFX",
+  "version": "1.0",
+  "author": "limpdev",
+  "description": "Adds a 120Hz high-performance, customizable ripple effect to clicks on any webpage.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ripplefx@limpdev.com",
+      "strict_min_version": "109.0",
+      "browser_specific_settings": {
+        "gecko": {
+          "data_collection_permissions": {
+            "required": [
+              "none"
+            ],
+            "optional": [
+              "technicalAndInteraction"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+</file>
+
+<file path="dist-edge/manifest.json">
+{
+  "manifest_version": 3,
+  "name": "RippleFX",
+  "version": "1.0",
+  "author": "limpdev",
+  "description": "Adds a 120Hz high-performance, customizable ripple effect to clicks on any webpage.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ripplefx@limpdev.com",
+      "strict_min_version": "109.0",
+      "browser_specific_settings": {
+        "gecko": {
+          "data_collection_permissions": {
+            "required": [
+              "none"
+            ],
+            "optional": [
+              "technicalAndInteraction"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+</file>
+
+<file path="dist-firefox/manifest.json">
+{
+  "manifest_version": 3,
+  "name": "RippleFX",
+  "version": "1.0",
+  "author": "limpdev",
+  "description": "Adds a 120Hz high-performance, customizable ripple effect to clicks on any webpage.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ripplefx@limpdev.com",
+      "strict_min_version": "109.0"
+    }
+  }
+}
 </file>
 
 <file path="manifest.json">
@@ -469,6 +961,20 @@ document.addEventListener("DOMContentLoaded", () => {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ripplefx@limpdev.com",
+      "strict_min_version": "109.0",
+      "browser_specific_settings": {
+        "gecko": {
+          "data_collection_permissions": {
+            "required": ["none"],
+            "optional": ["technicalAndInteraction"]
+          }
+        }
+      }
+    }
   }
 }
 </file>
