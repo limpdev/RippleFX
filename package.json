@@ -3,17 +3,17 @@
   "version": "1.0.0",
   "description": "High-performance ripple effect browser extension",
   "scripts": {
-    "build": "node build.js",
+    "dev": "node dev.js",
+    "build": "node xbuild.js",
     "build:all": "node xbuild.js",
     "build:chrome": "BROWSER=chrome node xbuild.js",
     "build:firefox": "BROWSER=firefox node xbuild.js",
     "build:edge": "BROWSER=edge node xbuild.js",
     "package": "yarn build:all && npm run zip:all",
-    "zip:all": "yarn zip:chrome && npm run zip:firefox && npm run zip:edge",
+    "zip:all": "yarn zip:chrome && yarn run zip:firefox && yarn run zip:edge",
     "zip:chrome": "cd dist-chrome && zip -r ../ripplefx-chrome.zip . && cd ..",
     "zip:firefox": "cd dist-firefox && zip -r ../ripplefx-firefox.zip . && cd ..",
-    "zip:edge": "cd dist-edge && zip -r ../ripplefx-edge.zip . && cd ..",
-    "watch": "node build.js && echo 'Watching...' || exit 0"
+    "zip:edge": "cd dist-edge && zip -r ../ripplefx-edge.zip . && cd .."
   },
   "dependencies": {
     "esbuild": "^0.27.1",

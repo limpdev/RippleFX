@@ -47,7 +47,7 @@ fs.writeFileSync(path.join(distDir, 'popup.html'), minifiedHtml);
 // Copy manifest and icons
 fs.copyFileSync('manifest.json', path.join(distDir, 'manifest.json'));
 fs.copyFileSync('LICENSE', path.join(distDir, 'LICENSE'));
-
+fs.copyFileSync('assets/drip.svg', path.join(distDir, 'drip.svg'));
 // Copy icon files
 const icons = ['icon16.png', 'icon48.png', 'icon128.png', 'icon1024.png'];
 icons.forEach(icon => {
