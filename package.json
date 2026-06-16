@@ -1,6 +1,6 @@
 {
   "name": "ripplefx",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "High-performance ripple effect browser extension",
   "scripts": {
     "dev": "node dev.js",
